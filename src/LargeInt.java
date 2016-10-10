@@ -3,7 +3,7 @@
  */
 public class LargeInt implements Comparable<LargeInt>{
 	public LargeIntHeader head;
-	public LargeIntNode first;  // the largest "digit".  To be used to start division and work down
+	public LargeIntNode first;  // the most significant "digit".  To be used to start division and work down
 	public LargeIntNode last;   // the least significant "digit". To be used to start addition | subtraction | multiplication
 
 	public LargeInt() {
@@ -14,25 +14,34 @@ public class LargeInt implements Comparable<LargeInt>{
 
 	public LargeInt(LargeIntNode first, int sign) {
 		// first is assumed to be non-null, and first.prev is assumed to be null
-		while(first.getPrev() != null){
-			// for me this should never be needed but it is just book-keeping
-			first = first.getPrev();
-		}
-		while(first.getVal() == 0){
-			// remove leading zeros caused in subtraction
-			// TODO figure out how to fix this so that it does not cause an issue
-			LargeIntNode d = first;
-			first = first.getNext();
-			first.setPrev( null );
-			d = null;   // delete d (this really doesnt do anything in java
+		if(first != null) {
+			while(first.getPrev() != null) {
+				// for me this should never be needed but it is just book-keeping
+				first = first.getPrev();
+			}
+			while(first.getVal() == 0) {
+				// remove leading zeros caused in subtraction
+				// TODO figure out how to fix this so that it does not cause an issue
+				LargeIntNode d = first;
+				first = first.getNext();
+				if(first != null) {
+					first.setPrev( null );
+				}
+				else {
+					break;
+				}
+				d = null;   // delete d (this really doesnt do anything in java
+			}
 		}
 		this.first = first;
 
 		// find the length and the last node
 		int numNodes = 1;
-		while(first.getNext() != null) {
-			first = first.getNext();
-			numNodes++;
+		if(first != null) {
+			while(first.getNext() != null) {
+				first = first.getNext();
+				numNodes++;
+			}
 		}
 		this.last = first;
 		head = new LargeIntHeader( numNodes, sign );
@@ -46,27 +55,27 @@ public class LargeInt implements Comparable<LargeInt>{
 		// String is all 0s case
 		if(str.matches( "[+-]?[0]+" )) { return new LargeInt(); }
 
-		// check for a minus(45) or plus(43) sign.  Positive for default
+		// check for a minus(45) or plus(43) sign.  Positive for default and remove all invalid characters (aka any non hex characters)
 		int sign;
 		String s;
 		if(str.charAt( 0 ) == '-') {
 			sign = -1;
-			s = str.substring( 1 );
+			s = str.substring( 1 ).replaceAll( "[^0-9]", "" );;
 		}
 		else if(str.charAt( 0 ) == '+') {
 			sign = 1;
-			s = str.substring( 1 );
+			s = str.substring( 1 ).replaceAll( "[^0-9]", "" );;
 		}
 		else {
 			sign = 1;
-			s = str;
+			s = str.replaceAll( "[^0-9]", "" );;
 		}
 
 		// the case where the int is only one "digit"
 		int val;
 		if(s.length() <= 4) {
 			//System.out.println("this is a small int: " + s.length());
-			val = Integer.parseUnsignedInt( s, 16 );
+			val = Integer.parseUnsignedInt( s, 10 );
 			LargeIntNode node = new LargeIntNode( null, null, val );
 			return new LargeInt( node, sign );
 		}
@@ -74,7 +83,7 @@ public class LargeInt implements Comparable<LargeInt>{
 		// general case: get the first digit of length 1-4 then the infinite following digits of length 4
 		int p = ((s.length() - 1) & 3) + 1;   // this crazy math is to get the first 1-4 digits instead 0-3 digits
 		String sub = s.substring( 0, p );
-		val = Integer.parseUnsignedInt( sub, 16 );
+		val = Integer.parseUnsignedInt( sub, 10 );
 		LargeIntNode node1 = null, node2 = null, firstNode;
 		node1 = new LargeIntNode( node2, null, val );
 		if(node2 != null) { node2.setNext( node1 ); }
@@ -83,7 +92,7 @@ public class LargeInt implements Comparable<LargeInt>{
 
 		for(int i = p + 4; i < s.length() + 1; i += 4, p += 4) {
 			sub = s.substring( p, i );
-			val = Integer.parseUnsignedInt( sub, 16 );
+			val = Integer.parseUnsignedInt( sub, 10 );
 			node1 = new LargeIntNode( node2, null, val );
 			node2.setNext( node1 );
 			node2 = node1;
@@ -119,11 +128,22 @@ public class LargeInt implements Comparable<LargeInt>{
 			val = Aval.getVal() + Bval.getVal() + carryVal;
 
 			// check for overflow
+			/*
+			// carryVal for hex
 			if(val > 0x0000ffff) {
 				carryVal = (val & 0xffff0000) >> 16;
 				val = (val & 0x0000ffff);
 			}
 			else {
+				carryVal = 0;
+			}
+			*/
+			// carryVal for decimal
+			if(val > 10000){
+				carryVal = val / 10000;
+				val = val % 10000;
+			}
+			else{
 				carryVal = 0;
 			}
 
@@ -208,7 +228,11 @@ public class LargeInt implements Comparable<LargeInt>{
 		int carryVal = 0;
 		while(Aval != null && Bval != null){
 			if(Aval.getVal() < Bval.getVal()){
-				val = (Aval.getVal() + 0x00010000) - Bval.getVal() + carryVal;
+				/* // carryVal for Hex
+				 * val = (Aval.getVal() + 0x00010000) - Bval.getVal() + carryVal;
+				 */
+				// carryVal for decimal
+				val = (Aval.getVal() + 10000) - Bval.getVal() + carryVal;
 				carryVal = -1;
 			}
 			else{
@@ -239,7 +263,12 @@ public class LargeInt implements Comparable<LargeInt>{
 		}
 		while(Bval != null){
 			// when the second val is larger you need the opposite of the values
-			val = 0x0000ffff - Bval.getVal() + carryVal;
+
+			/* // carryVal for Hex
+			 * val = 0x0000ffff - Bval.getVal() + carryVal;
+			 */
+			// carryVal for decimal
+			val = 9999 - Bval.getVal() + carryVal;
 			carryVal = (Bval.getVal() == 0xffff) ? -1 : 0;
 			Rval1 = new LargeIntNode( null, Rval2, val );
 			Rval2.setPrev( Rval1 );
@@ -281,9 +310,21 @@ public class LargeInt implements Comparable<LargeInt>{
 			}
 			for(long j = 1; j <= b.head.getLength(); j++) {
 				val = Aval.getVal() * Bval.getVal() + carryVal;
+				/*
+				// carryVal for hex
 				if(val > 0x0000ffff){
 					carryVal = (val & 0xffff0000) >> 16;
 					val = val & 0x0000ffff;
+				}
+				else{
+					carryVal = 0;
+				}
+				*/
+
+				// carryVal for decimal
+				if(val > 10000){
+					carryVal = val / 10000;
+					val = val % 10000;
 				}
 				else{
 					carryVal = 0;
@@ -313,6 +354,13 @@ public class LargeInt implements Comparable<LargeInt>{
 
 		product.head.setSign( sign );
 		return product;
+	}
+
+	public static LargeInt divide(LargeInt a, LargeInt b){
+		// this means a / b so b must be smaller than a
+		if(a.compareTo( b ) == -1){ return new LargeInt(  ); }
+		if(a.compareTo( b ) ==  0){ return new LargeInt( new LargeIntNode( null, null, 1 ), 1 ); }
+		return new LargeInt(  );
 	}
 
 	public static LargeInt exponent(LargeInt b, long e){
@@ -386,7 +434,8 @@ public class LargeInt implements Comparable<LargeInt>{
 
 		LargeIntNode node = first;
 		while(node != null) {
-			String d = Integer.toHexString( node.getVal() );
+			//String d = Integer.toHexString( node.getVal() );      // for hex
+			String d = Integer.toString( node.getVal() );           // for dec
 			// make sure that leading 0s are included
 			while(d.length() < 4) {
 				d = '0' + d;
