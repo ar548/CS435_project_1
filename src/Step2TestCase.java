@@ -35,7 +35,7 @@ public class Step2TestCase {
         System.out.println("Node Output\n");
 
         for ( LongInteger l : mainList ){
-            Node node = l.getFirst();
+            DLLNode node = l.getFirst();
             while (!l.isLast(node)){
                 System.out.printf("%5d ->", node.getData());
                 node = l.getNext(node);

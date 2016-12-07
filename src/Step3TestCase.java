@@ -1,16 +1,18 @@
 /*
- * Do NOT change this class 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 
 import java.util.ArrayList;
 
 /**
  *
- * @author your name here
+ * @author hl395
  */
 public class Step3TestCase {
     public static void main(String[] args) {
-   
+
         LongInteger A = new LongInteger("3333");
         LongInteger B = new LongInteger("99999999");
         LongInteger C = new LongInteger("-732246813575");
@@ -35,7 +37,7 @@ public class Step3TestCase {
         System.out.println("Node Output\n");
 
         for ( LongInteger l : mainList ){
-            Node node = l.getFirst();
+            DLLNode node = l.getFirst();
             while (!l.isLast(node)){
                 System.out.printf("%5d ->", node.getData());
                 node = l.getNext(node);
@@ -66,7 +68,7 @@ public class Step3TestCase {
         System.out.printf("Overflow: %-1d%n", UtilityOperations.overFlow(b));
         System.out.printf("Underflow: %-8d%n", UtilityOperations.underFlow(b));
         System.out.printf("Digits: %-1d%n", UtilityOperations.digits(b));
-        
+     
         System.out.println("\nComparisons");
         for(int i = 0; i < mainList.size(); i++){
             for(int j = 0; j < mainList.size(); j++){
@@ -137,7 +139,7 @@ public class Step3TestCase {
             }
         }
         
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < 8; i++){
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 5th Power");
             mainList.get(i).power(5).output();
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 10th Power");
@@ -145,7 +147,7 @@ public class Step3TestCase {
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 25th Power");
             mainList.get(i).power(25).output();
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 31th Power");
-            mainList.get(i).power(30).output();
+            mainList.get(i).power(31).output();
         }
         
         LongInteger U = A.multiply(D);

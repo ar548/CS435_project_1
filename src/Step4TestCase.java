@@ -1,12 +1,14 @@
 /*
- * Do NOT change this class 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 
 import java.util.ArrayList;
 
 /**
  *
- * @author your name here
+ * @author hl395
  */
 public class Step4TestCase {
     public static void main(String[] args) {
@@ -35,7 +37,7 @@ public class Step4TestCase {
         System.out.println("Node Output\n");
 
         for ( LongInteger l : mainList ){
-            Node node = l.getFirst();
+            DLLNode node = l.getFirst();
             while (!l.isLast(node)){
                 System.out.printf("%5d ->", node.getData());
                 node = l.getNext(node);
@@ -86,8 +88,8 @@ public class Step4TestCase {
         for(int i = 0; i <mainList.size(); i++){
             for(int j = 0; j <mainList.size(); j++) {
                 if(i==j) continue;
-                System.out.println("\n" + Character.toString((char) (i + 65)) + " subtracted from " + Character.toString((char) (j + 65)));
-                mainList.get(j).subtract(mainList.get(i)).output();
+                System.out.println("\n" + Character.toString((char) (i + 65)) + " minus " + Character.toString((char) (j + 65)));
+                mainList.get(i).subtract(mainList.get(j)).output();
             }
         }
 
@@ -124,11 +126,6 @@ public class Step4TestCase {
         LongInteger T = N.subtract(Q);
         mainList.add(T);
         
-        for(int i = 9; i<mainList.size(); i++){
-            System.out.println("\n" + Character.toString((char) (i + 65)));
-            mainList.get(i).output();
-        }
-        
         for(int i = 0; i < 9; i++){
             for(int j = 0; j < 9; j++) {
                 if(i==j) continue;
@@ -137,7 +134,7 @@ public class Step4TestCase {
             }
         }
         
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < 8; i++){
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 5th Power");
             mainList.get(i).power(5).output();
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 10th Power");
@@ -145,9 +142,9 @@ public class Step4TestCase {
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 25th Power");
             mainList.get(i).power(25).output();
             System.out.println("\n" + Character.toString((char) (i + 65)) + " to 31th Power");
-            mainList.get(i).power(30).output();
+            mainList.get(i).power(31).output();
         }
-        
+       
         LongInteger U = A.multiply(D);
         mainList.add(U);
 
@@ -166,7 +163,7 @@ public class Step4TestCase {
         LongInteger Z = M.multiply(N);
         mainList.add(Z);
         
-        for(int i = 20; i< mainList.size(); i++){
+        for(int i = 20; i<mainList.size(); i++){
             System.out.println("\n" + Character.toString((char) (i + 65)));
             mainList.get(i).output();
         }

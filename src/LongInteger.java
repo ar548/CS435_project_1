@@ -1,18 +1,18 @@
 /**
  * Created by Alex Rosen on 10/6/2016.
  */
-public class LongInteger implements Comparable<LongInteger>{
-	public LongIntegerHeader head;
-	public Node first;  // the most significant "digit".  To be used to start division and work down
-	public Node last;   // the least significant "digit". To be used to start addition | subtraction | multiplication
+class LongInteger implements Comparable<LongInteger>{
+	protected LongIntegerHeader head;
+	protected DLLNode first;  // the most significant "digit".  To be used to start division and work down
+	protected DLLNode last;   // the least significant "digit". To be used to start addition | subtraction | multiplication
 
 	public LongInteger() {
 		this.head = new LongIntegerHeader();
-		this.first = new Node( null, null, 0 );
+		this.first = new DLLNode( null, null, 0 );
 		this.last = this.first;
 	}
 
-	public LongInteger(Node first, int sign) {
+	public LongInteger(DLLNode first, int sign) {
 		// first is assumed to be non-null, and first.prev is assumed to be null
 		if(first != null) {
 			while(first.getPrev() != null) {
@@ -21,15 +21,11 @@ public class LongInteger implements Comparable<LongInteger>{
 			}
 			while(first.getVal() == 0) {
 				// remove leading zeros in case the user is trying to break my program.  not that they should affect anything
-				Node d = first;
+				DLLNode d = first;
 				first = first.getNext();
-				if(first != null) {
-					first.setPrev( null );
-				}
-				else {
-					break;
-				}
-				d = null;   // delete d (this really doesnt do anything in java
+				if(first != null) { first.setPrev( null ); }
+				else { break; }
+				d = null;   // delete d (this really doesnt do anything in java)
 			}
 		}
 		this.first = first;
@@ -54,7 +50,7 @@ public class LongInteger implements Comparable<LongInteger>{
 		// String is all 0s case
 		if(str.matches( "[+-]?[0]+" )) { return new LongInteger(); }
 
-		// check for a minus(45) or plus(43) sign.  Positive for default and remove all invalid characters (aka any non hex characters)
+		// check for a minus(45) or plus(43) sign.  Positive for default and remove all invalid characters (aka any non hex/dec characters)
 		int sign;
 		String s;
 		if(str.charAt( 0 ) == '-') {
@@ -78,7 +74,7 @@ public class LongInteger implements Comparable<LongInteger>{
 		int val;
 		if(s.length() <= 4) {
 			val = Integer.parseUnsignedInt( s, 10 );
-			Node node = new Node( null, null, val );
+			DLLNode node = new DLLNode( null, null, val );
 			return new LongInteger( node, sign );
 		}
 
@@ -86,8 +82,8 @@ public class LongInteger implements Comparable<LongInteger>{
 		int p = ((s.length() - 1) & 3) + 1;   // this crazy math is to get the first 1-4 digits instead 0-3 digits
 		String sub = s.substring( 0, p );
 		val = Integer.parseUnsignedInt( sub, 10 );
-		Node node1 = null, node2 = null, firstNode;
-		node1 = new Node( node2, null, val );
+		DLLNode node1, node2 = null, firstNode;
+		node1 = new DLLNode( node2, null, val );
 		if(node2 != null) { node2.setNext( node1 ); }
 		node2 = node1;
 		firstNode = node1;
@@ -95,7 +91,7 @@ public class LongInteger implements Comparable<LongInteger>{
 		for(int i = p + 4; i < s.length() + 1; i += 4, p += 4) {
 			sub = s.substring( p, i );
 			val = Integer.parseUnsignedInt( sub, 10 );
-			node1 = new Node( node2, null, val );
+			node1 = new DLLNode( node2, null, val );
 			node2.setNext( node1 );
 			node2 = node1;
 		}
@@ -104,13 +100,11 @@ public class LongInteger implements Comparable<LongInteger>{
 
 	public static final LongInteger add(LongInteger a, LongInteger b) {
 		// this function assumes that the sign of the two opperators is the same.  If it is not then subtract the negative instead.
+
+		// edge cases
 		int carryVal = 0;
-		if(a.head.getSign() == 0) {
-			return copy(b);
-		}
-		else if(b.head.getSign() == 0) {
-			return copy(a);
-		}
+		if(a.head.getSign() == 0) { return copy(b); }
+		else if(b.head.getSign() == 0) { return copy(a); }
 		else if(a.head.getSign() != b.head.getSign()) {
 			b.head.setSign( -1 * b.head.getSign() );
 			LongInteger c = a.subtract( b );
@@ -120,10 +114,10 @@ public class LongInteger implements Comparable<LongInteger>{
 
 		// start the actual addition here
 		int val;
-		Node Aval = a.last;
-		Node Bval = b.last;
-		Node Rval1 = null;
-		Node Rval2 = null;
+		DLLNode Aval = a.last;
+		DLLNode Bval = b.last;
+		DLLNode Rval1 = null;
+		DLLNode Rval2 = null;
 
 		while(Aval != null && Bval != null) {
 			// add
@@ -152,7 +146,7 @@ public class LongInteger implements Comparable<LongInteger>{
 			//*/
 
 			// store the val and move to the next pair
-			Rval1 = new Node( null, Rval2, val );
+			Rval1 = new DLLNode( null, Rval2, val );
 			if(Rval2 != null) {
 				Rval2.setPrev( Rval1 );
 			}
@@ -161,34 +155,30 @@ public class LongInteger implements Comparable<LongInteger>{
 			Bval = Bval.getPrev();
 		}
 		if(Aval == null && Bval == null) {
+			//the numbers are the same size and there is a carry
 			val = carryVal;
-			Rval1 = new Node( null, Rval2, val );
-			if(Rval2 != null) {
-				Rval2.setPrev( Rval1 );
-			}
+			Rval1 = new DLLNode( null, Rval2, val );
+			if(Rval2 != null) { Rval2.setPrev( Rval1 ); }
 			Rval2 = Rval1;
 		}
 		while(Aval != null) {
+			// a.size > b.size
 			val = Aval.getVal() + carryVal;
 			carryVal = 0;
-			Rval1 = new Node( null, Rval2, val );
-			if(Rval2 != null) {
-				Rval2.setPrev( Rval1 );
-			}
+			Rval1 = new DLLNode( null, Rval2, val );
+			if(Rval2 != null) { Rval2.setPrev( Rval1 ); }
 			Rval2 = Rval1;
 			Aval = Aval.getPrev();
 		}
 		while(Bval != null) {
+			// a.size < b.size
 			val = Bval.getVal() + carryVal;
 			carryVal = 0;
-			Rval1 = new Node( null, Rval2, val );
-			if(Rval2 != null) {
-				Rval2.setPrev( Rval1 );
-			}
+			Rval1 = new DLLNode( null, Rval2, val );
+			if(Rval2 != null) { Rval2.setPrev( Rval1 ); }
 			Rval2 = Rval1;
 			Bval = Bval.getPrev();
 		}
-
 
 		return new LongInteger( Rval1, a.head.getSign() );   // sign never changes during addition
 	}
@@ -196,7 +186,7 @@ public class LongInteger implements Comparable<LongInteger>{
 	public static final LongInteger subtract(LongInteger a, LongInteger b) {
 		// Performs a-b assuming that a and b have the same sign.  If they dont then add instead
 
-		// 0 cases and non-subtraction case
+		// edge cases
 		if(b.head.getSign() == 0) { return copy(a); }
 		else if(a.head.getSign() == 0) {
 			LongInteger r =  copy(b);
@@ -210,40 +200,55 @@ public class LongInteger implements Comparable<LongInteger>{
 			return c;
 		}
 
+		int comp = a.compareTo( b );
+		if(comp == -1){
+			if(a.head.getSign() == 1) {
+				LongInteger c = subtract( b, a );
+				c.head.setSign( -1 * c.head.getSign() );
+				return c;
+			}
+		}
+		else if(comp == 1){
+			if(a.head.getSign() == -1){
+				LongInteger c = subtract( b, a );
+				c.head.setSign( -1 * c.head.getSign() );
+				return c;
+			}
+		}
+		else if(comp == 0){ return new LongInteger(  ); }
+
 		// checks if a > b or not to determine the sign
 		int sign = 0;
-		if(a.compareTo( b ) == 1){
-			sign = a.head.getSign();
-		}
-		else if(a.compareTo( b ) == -1){
-			sign = -1*a.head.getSign();
-		}
-		else{
-			return new LongInteger();
-		}
+		if(a.compareTo( b ) == 1){ sign = 1; }
+		else if(a.compareTo( b ) == -1){ sign = -1; }
+		else{ return new LongInteger(); }
 
 		// do actual subtraction here
-		Node Aval = a.last;
-		Node Bval = b.last;
-		Node Rval1 = null;
-		Node Rval2 = null;
+		DLLNode Aval = a.last;
+		DLLNode Bval = b.last;
+		DLLNode Rval1 = null;
+		DLLNode Rval2 = null;
 
 		int val;
 		int carryVal = 0;
 		while(Aval != null && Bval != null){
 			if(Aval.getVal() < Bval.getVal()){
 				/* // carryVal for Hex
-				 * val = (Aval.getVal() + 0x00010000) - Bval.getVal() + carryVal;
+				 val = (Aval.getVal() + 0x00010000) - Bval.getVal() + carryVal;
 				 */
 				// carryVal for decimal
 				val = (Aval.getVal() + 10000) - Bval.getVal() + carryVal;
 				carryVal = -1;
 			}
-			else{
+			else if(Aval.getVal() >= Bval.getVal()){
 				val = Aval.getVal() - Bval.getVal() + carryVal;
 				carryVal = 0;
 			}
-			Rval1 = new Node( null, Rval2, val );
+			else{
+				val = Math.abs( Aval.getVal() - Bval.getVal() + carryVal );
+			}
+
+			Rval1 = new DLLNode( null, Rval2, val );
 			if(Rval2 != null) {
 				Rval2.setPrev( Rval1 );
 			}
@@ -260,7 +265,7 @@ public class LongInteger implements Comparable<LongInteger>{
 			else{
 				val = 0;
 			}
-			Rval1 = new Node( null, Rval2, val );
+			Rval1 = new DLLNode( null, Rval2, val );
 			if(Rval2 != null) {
 				Rval2.setPrev( Rval1 );
 			}
@@ -274,14 +279,10 @@ public class LongInteger implements Comparable<LongInteger>{
 			val = 0x0000ffff - Bval.getVal() + carryVal;
 			carryVal = (Bval.getVal() == 0xffff) ? -1 : 0;
 			//*/
-			/**/
 			// carryVal for decimal
-			// val = 9999 - Bval.getVal() + carryVal;
 			val = Bval.getVal() + carryVal;
-			//carryVal = (Bval.getVal() == 9999 ? -1 : 0;
 			carryVal = 0;
-			//*/
-			Rval1 = new Node( null, Rval2, val );
+			Rval1 = new DLLNode( null, Rval2, val );
 			Rval2.setPrev( Rval1 );
 			Rval2 = Rval1;
 			Bval = Bval.getPrev();
@@ -291,25 +292,19 @@ public class LongInteger implements Comparable<LongInteger>{
 	}
 
 	public static final LongInteger multiply(LongInteger a, LongInteger b){
-		long m, n, o, p;
 		// this function uses b.length < a.length for efficency.  if this is not true they are swapped
-		//if(a.head.getLength() < b.head.getLength()){ return multiply( b, a ); }
-		n = a.head.getLength();
-		m = b.head.getLength();
-		if( n<m ){ return multiply( b, a ); }
+		if(a.head.getLength() < b.head.getLength()){ return multiply( b, a ); }
 		// if either is 0 return 0
 		if(a.head.getSign() == 0 || b.head.getSign() == 0){ return new LongInteger(); }
 
 		// in multiplication if the signs are the same then the sign of the answer is the same
-		int sign;
-		if (a.head.getSign() == b.head.getSign()){ sign = 1; }
-		else { sign = -1; }
+		int sign = (a.head.getSign() == b.head.getSign()) ? 1 : -1;
 
 		// do the actual multiplication here
-		Node Aval = a.last;
-		Node Bval = b.last;
-		Node Rval1 = null;
-		Node Rval2 = null;
+		DLLNode Aval = a.last;
+		DLLNode Bval = b.last;
+		DLLNode Rval1 = null;
+		DLLNode Rval2 = null;
 
 		LongInteger product = new LongInteger();
 		LongInteger partialProduct;
@@ -318,10 +313,10 @@ public class LongInteger implements Comparable<LongInteger>{
 		for(long i = 0; i < a.head.getLength(); i++){
 
 			// no need to do any work if Bval is 0 because this digit doesnt add anything
-			//if(Bval.getVal() == 0){ continue; }
+			if(Bval.getVal() == 0){ continue; }
 
 			for(long j = 0; j < i; j++) {
-				Rval1 = new Node( null, Rval2, 0 );
+				Rval1 = new DLLNode( null, Rval2, 0 );
 				if(Rval2 != null) {
 					Rval2.setPrev( Rval1 );
 				}
@@ -351,7 +346,7 @@ public class LongInteger implements Comparable<LongInteger>{
 				//*/
 
 				// store the value and shift the pointer for b
-				Rval1 = new Node( null, Rval2, val );
+				Rval1 = new DLLNode( null, Rval2, val );
 				if(Rval2 != null) {
 					Rval2.setPrev( Rval1 );
 				}
@@ -360,7 +355,7 @@ public class LongInteger implements Comparable<LongInteger>{
 			}
 			if(carryVal != 0){
 				// if there is a final carry value
-				Rval1 = new Node( null, Rval2, carryVal );
+				Rval1 = new DLLNode( null, Rval2, carryVal );
 				Rval2.setPrev( Rval1 );
 				carryVal = 0;
 			}
@@ -380,13 +375,13 @@ public class LongInteger implements Comparable<LongInteger>{
 		// this means a / b so b must be smaller than a
 		if(b.head.getSign() == 0){ throw new ArithmeticException("Divide By Zero Error!"); }
 		if(a.head.getSign() == 0){ return new LongInteger(  ); }
-		if(a.compareTo( b ) == -1){ return new LongInteger(  ); }
-		if(a.compareTo( b ) ==  0){ return new LongInteger( new Node( null, null, 1 ), 1 ); }
+		if(a.compareTo( b ) ==  0){ return new LongInteger( new DLLNode( null, null, 1 ), 1 ); }
 
 		int a_sign = a.head.getSign();
 		int b_sign = b.head.getSign();
 		a.head.setSign( 1 );
 		b.head.setSign( 1 );
+		if(b.compareTo( a ) == 1){ return new LongInteger(  ); }
 		int sign = (a_sign == b_sign) ? 1 : -1;
 
 		LongInteger c = copy(b);
@@ -396,80 +391,72 @@ public class LongInteger implements Comparable<LongInteger>{
 		b.head.setSign( b_sign );
 
 		// make a and b the same size
-		Node Cval = c.last;
-		Node n;
+		DLLNode Cval = c.last;
+		DLLNode n;
 		for(long i = b.head.getLength(); i < a.head.getLength(); i++) {
-			n = new Node( Cval, null, 0 );
+			n = new DLLNode( Cval, null, 0 );
 			Cval.setNext( n );
 			Cval = n;
 			c.head.increaseLength();
 		}
 		c.last = Cval;
 
-		Node Rval1 = null, Rval2 = null, temp;
+		DLLNode Rval1 = null, Rval2 = null, temp;
 
-		boolean eq = false;
-		int val = 0;
+		int val = 0, comp;
 		Integer divTry = 0;
-		LongInteger BigDivTry;
-		for(long i = b.head.getLength(); i < a.head.getLength(); i++) {
-			// shorten c
-			temp = Cval;
-			Cval = Cval.getPrev();
-			Cval.setNext( null );
-			temp.setPrev( null );
-			c.last = Cval;
-			c.head.decreaseLength();
-
-			// get the value of this node
-			if(!eq) {
-				// the break case where you just add 0 from here on out
-				int comp1 = d.compareTo( c );
-				if(comp1 == 0) {
-					eq = true;
-					val = 1;
-				}
-				else if(comp1 == -1){
-					val = 0;
-				}
-				else{
-					// TODO get divTry here
-					divTry = (d.first.getVal()*10000 + d.first.getNext().getVal()) / c.first.getVal();
-					BigDivTry = new LongInteger( divTry.toString() );
-
-					if( divTry != 0) {
-						LongInteger q = multiply( c, BigDivTry );
-						// TODO change this
-						boolean l = q.lessThan( d );
-						boolean e = q.equalTo( d );
-						if(l) {
-							d = subtract( d, q );
-						}
-						else if(e) {
-							eq = true;
-							d = subtract( d, q );
-						}
-						else {
-							divTry -= 1;
-							d = subtract( d, subtract( q, BigDivTry ) );
-						}
-					}
-					val = divTry;
-				}
+		LongInteger BigDivTry, q;
+		for(long i = b.head.getLength(); i <= a.head.getLength(); i++) {
+			// attempt to divide the beginning of the numbers
+			divTry = d.first.getVal() / c.first.getVal();
+			if(divTry <= 0) {
+				// if that doesnt wirk shift it down
+				divTry = (d.first.getVal() * 10000 + d.first.getNext().getVal()) / c.first.getVal();
+			}
+			BigDivTry = new LongInteger( divTry.toString() );
+			q = multiply( c, BigDivTry );
+			comp = q.compareTo( d );
+			if(comp == -1){
+				val = divTry;
+			}
+			else if(comp == 0){
+				val = divTry;
 			}
 			else{
-				val = 0;
+				do{
+					divTry--;
+					q = q.subtract( q, c );
+				}while(q.compareTo( d ) == 1);
+				val = divTry;
+			}
+			d = subtract( d, q );
+			if(d.head.getSign() == -1){
+				System.err.println( "ERROR: Subtracting too much  " );
+			}
+			if(c.compareTo( d ) == -1) {
+				System.err.println( "ERROR: C is still less than D!  " );
 			}
 
-			Rval1 = new Node( Rval2, null, val );
-			if(Rval2 != null){
+			temp = Cval;
+			Cval = Cval.getPrev();
+			if(Cval != null) {
+				Cval.setNext( null );
+				temp.setPrev( null );
+				c.last = Cval;
+				c.head.decreaseLength();
+			}
+
+			Rval1 = new DLLNode( Rval2, null, val );
+			if(Rval2 != null) {
 				Rval2.setNext( Rval1 );
 			}
 			Rval2 = Rval1;
 		}
 
 		// System.out.println("The remainder is: " + d);
-		return new LongInteger( Rval1, sign );
+		LongInteger r = new LongInteger( Rval1, sign );
+		if(sign == -1){ r.last.setVal( r.last.getVal() + 1 ); }
+		return r;
 	}
 
 	public static final LongInteger exponent(LongInteger b, long e){
@@ -477,8 +464,9 @@ public class LongInteger implements Comparable<LongInteger>{
 
 		// if e is 0 return 1, if e is 1 return b
 		LongInteger c = copy(b);
-		LongInteger result = new LongInteger( new Node( null, null, 1 ), 1 );
+		LongInteger result = new LongInteger( new DLLNode( null, null, 1 ), 1 );
 
+		// no explanation needed.....
 		while(e > 0){
 			if((e&1) == 1){
 				result = multiply( result, c );
@@ -491,13 +479,13 @@ public class LongInteger implements Comparable<LongInteger>{
 
 	private static final LongInteger copy(LongInteger a){
 		// s simple function to copy the value of a LargeInt to another storage container
-		Node node1 = null;
-		Node node2 = null;
-		Node Aval = a.first;
+		DLLNode node1 = null;
+		DLLNode node2 = null;
+		DLLNode Aval = a.first;
 		LongInteger r;
 
 		while(Aval != null) {
-			node1 = new Node( node2, null, Aval.getVal() );
+			node1 = new DLLNode( node2, null, Aval.getVal() );
 			if(node2 != null) {
 				node2.setNext( node1 );
 			}
@@ -511,8 +499,8 @@ public class LongInteger implements Comparable<LongInteger>{
 
 	public void MAKENULL(){
 		this.head = null;
-		Node curr = first.getNext();
-		Node del = first;
+		DLLNode curr = first.getNext();
+		DLLNode del = first;
 
 		while(curr != null){
 			del.setNext( null );    // delete pointers between the nodes
@@ -530,26 +518,46 @@ public class LongInteger implements Comparable<LongInteger>{
 		String sign = "";
 		if(this.head.getSign() == 0){ return "0"; }
 		else if (this.head.getSign() == -1){ sign = "-"; }
-		else{ sign = "+"; }    // this doesnt have to be here because no sign is assumed to be positive but i put it here anyways to make everything line up nicely
+		//else{ sign = "+"; }    // this doesnt have to be here because no sign is assumed to be positive but i put it here anyways to make everything line up nicely
+		else{ sign = ""; }    // this doesnt have to be here because no sign is assumed to be positive but i put it here anyways to make everything line up nicely
 
-		Node node = first;
+		DLLNode node = first;
+		s = Integer.toString( node.getVal() );
+		node = node.getNext();
 		while(node != null) {
 			//String d = Integer.toHexString( node.getVal() );      // for hex
-			String d = Integer.toString( node.getVal() );           // for dec
+			//String d = Integer.toString( node.getVal() );           // for dec
+			s += String.format( "%1$04d", node.getVal());
+
 			// make sure that leading 0s are included
-			while(d.length() < 4) {
-				d = '0' + d;
-			}
-			s += d;
+//			while(d.length() < 4) {
+//				d = '0' + d;
+//			}
+//			s += d;
 			node = node.getNext();
 		}
 		int i = 0;
-		while(s.charAt( i++ ) == '0'){}     // remove leading 0s
-		return sign + s.substring( i-1 );
+//		while(s.charAt( i++ ) == '0'){}     // remove leading 0s
+
+//		s = s.substring( i-1 );
+		return sign + s;
+
+		// limit the output to a certain number of characters
+//		int numCharsPerLine = 64;
+//		String r[] =(sign+s).split("(?<=\\G.{numCharsPerLine})");
+//		String rtn = "";
+//		int j;
+//		for(j = 0; j < r.length -2; j++){
+//			rtn += (r[j] + "\n");
+//		}
+//		rtn += r[j];
+//		return rtn;
 	}
 
 	@Override public int compareTo(LongInteger that){
-		// the compareTo function so that I can determine the sign for subtraction
+		// the compareTo function:  -1 => <
+		//                           1 => >
+
 		final int LESS = -1;
 		final int EQUAL = 0;
 		final int GREATER = 1;
@@ -560,21 +568,21 @@ public class LongInteger implements Comparable<LongInteger>{
 			if(that.head.getSign() == -1){ return GREATER; }
 		}
 		if(this.head.getSign() == 1){
-			if(that.head.getSign() == 0){ return LESS; }
-			if(that.head.getSign() == -1){ return LESS; }
+			if(that.head.getSign() == 0){ return GREATER; }
+			if(that.head.getSign() == -1){ return GREATER; }
 			if(this.head.getLength() < that.head.getLength()){ return LESS; }
 			if(this.head.getLength() > that.head.getLength()){ return GREATER; }
 		}
 		if(this.head.getSign() == -1){
-			if(that.head.getSign() == 0){ return GREATER; }
-			if(that.head.getSign() == 1){ return GREATER; }
+			if(that.head.getSign() == 0){ return LESS; }
+			if(that.head.getSign() == 1){ return LESS; }
 			if(this.head.getLength() < that.head.getLength()){ return GREATER; }
 			if(this.head.getLength() > that.head.getLength()){ return LESS; }
 		}
 
 		// at this point they must be equal length and the same sign
-		Node thi = this.first;
-		Node tha  = that.first;
+		DLLNode thi = this.first;
+		DLLNode tha  = that.first;
 		for(long length = this.head.getLength();length > 0; length--){
 			// check each "digit" to until you find one that is less than the other
 			if(thi.getVal() < tha.getVal()){
@@ -592,6 +600,46 @@ public class LongInteger implements Comparable<LongInteger>{
 	}
 
 	// functions for the implementation of this project for the class's test cases
+	public long getDigitCount(){ return ((int)Math.ceil( Math.log10( this.first.getVal() )) + 4*(this.head.getLength() - 1)); }
+	public long size(){ return this.head.getLength(); }
+	public boolean getSign(){ return (this.head.getSign() == -1);}
+	public boolean lessThan(LongInteger that){ return (this.compareTo( that ) == -1); }
+	public boolean equalTo(LongInteger that){ return (this.compareTo( that ) == 0); }
+	public boolean greaterThan(LongInteger that){ return (this.compareTo( that ) == 1); }
+	public boolean isFirst(DLLNode p){ return (p.equals( first )); }
+	public boolean isLast(DLLNode p){ return (p.equals( last )); }
+	public boolean isEmpty(){ return (this.first == null); }  // my lists will never be empty
+	public LongInteger add( LongInteger i ){ return add( this, i); }
+	public LongInteger subtract( LongInteger i ){ return subtract( this, i); }
+	public LongInteger multiply( LongInteger i ){ return multiply( this, i); }
+	public LongInteger divide( LongInteger i ){ return divide( this, i); }
+	public LongInteger power(int p){ return exponent( this, p ); }
+	public DLLNode getLast(){ return this.last; }
+	public DLLNode getFirst(){ return this.first; }
+	public void output(){ System.out.println(this); }
+
+	public void insertFirst(int v){
+		DLLNode n = new DLLNode( null, first, v );
+		first.setPrev( n );
+		first = n;
+	}
+
+	public void insertLast(int v){
+		DLLNode n = new DLLNode( last, null, v );
+		last.setNext( n );
+		last = n;
+	}
+
+	public DLLNode getPrev(DLLNode p) throws NullPointerException{
+		if(p.getPrev() == null) throw new NullPointerException( " This node has no previous node.  It is first. " );
+		else return p.getPrev();
+	}
+
+	public DLLNode getNext(DLLNode p) throws NullPointerException{
+		if(p.getNext() == null) throw new NullPointerException( " This node has no next node.  It is last. " );
+		else return p.getNext();
+	}
+
 	public LongInteger(String str){
 
 		// empty string case
@@ -605,7 +653,7 @@ public class LongInteger implements Comparable<LongInteger>{
 		// String is all 0s case
 		if(str.matches( "[+-]?[0]+" )) {
 			this.head = new LongIntegerHeader( 1, 0 );
-			this.first = new Node( null, null, 0 );
+			this.first = new DLLNode( null, null, 0 );
 			this.last = this.first;
 			return;
 		}
@@ -634,7 +682,7 @@ public class LongInteger implements Comparable<LongInteger>{
 		int val;
 		if(s.length() <= 4) {
 			val = Integer.parseUnsignedInt( s, 10 );
-			this.first = new Node( null, null, val );
+			this.first = new DLLNode( null, null, val );
 			this.last = first;
 			this.head = new LongIntegerHeader( 1, sign );
 			return;
@@ -645,8 +693,8 @@ public class LongInteger implements Comparable<LongInteger>{
 		int length = 1;
 		String sub = s.substring( 0, p );
 		val = Integer.parseUnsignedInt( sub, 10 );
-		Node node1, node2 = null;
-		node1 = new Node( node2, null, val );
+		DLLNode node1, node2 = null;
+		node1 = new DLLNode( node2, null, val );
 		if(node2 != null) { node2.setNext( node1 ); }
 		node2 = node1;
 		this.first = node1;
@@ -654,7 +702,7 @@ public class LongInteger implements Comparable<LongInteger>{
 		for(int i = p + 4; i < s.length() + 1; i += 4, p += 4) {
 			sub = s.substring( p, i );
 			val = Integer.parseUnsignedInt( sub, 10 );
-			node1 = new Node( node2, null, val );
+			node1 = new DLLNode( node2, null, val );
 			node2.setNext( node1 );
 			node2 = node1;
 			length++;
@@ -662,40 +710,5 @@ public class LongInteger implements Comparable<LongInteger>{
 
 		this.last = node1;
 		this.head = new LongIntegerHeader( length, sign );
-	}
-	public void output(){ System.out.println(this); }
-	public void insertFirst(int v){
-		Node n = new Node( null, first, v );
-		first.setPrev( n );
-		first = n;
-	}
-	public void insertLast(int v){
-		Node n = new Node( last, null, v );
-		last.setNext( n );
-		last = n;
-	}
-	public long getDigitCount(){ return ((int)Math.ceil( Math.log10( this.first.getVal() )) + 4*(this.head.getLength() - 1)); }
-	public long size(){ return this.head.getLength(); }
-	public boolean getSign(){ return (this.head.getSign() == -1);}
-	public boolean lessThan(LongInteger that){ return (compareTo( that ) == -1); }
-	public boolean equalTo(LongInteger that){ return (compareTo( that ) == 0); }
-	public boolean greaterThan(LongInteger that){ return (compareTo( that ) == 1); }
-	public boolean isFirst(Node p){ return (p.equals( first )); }   // this should just check the previous node to see if its null but i dont think that how the TA wants it*/
-	public boolean isLast(Node p){ return (p.equals( last )); }     // this should just check the next node to see if its null but i dont think that how the TA wants it
-	public boolean isEmpty(){ return (this.first == null); }  // my lists will never be empty
-	public LongInteger add(LongInteger i){return add(this, i);}
-	public LongInteger subtract(LongInteger i){ return subtract( this, i ) ; }
-	public LongInteger multiply(LongInteger i){ return multiply(this, i); }
-	public LongInteger divide(LongInteger i){ return divide(this, i); }
-	public LongInteger power(int p){ return exponent( this, p ); }
-	public Node getLast(){ return this.last; }
-	public Node getFirst(){ return this.first; }
-	public Node getPrev(Node p) throws NullPointerException{
-		if(p.getPrev() == null) throw new NullPointerException( " This node has no previous node.  It is first. " );
-		else return p.getPrev();
-	}
-	public Node getNext(Node p) throws NullPointerException{
-		if(p.getNext() == null) throw new NullPointerException( " This node has no next node.  It is last. " );
-		else return p.getNext();
 	}
 }

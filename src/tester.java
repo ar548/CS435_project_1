@@ -3,13 +3,6 @@
  */
 public class tester {
 	public static void main(String args[]){
-		LongInteger A = new LongInteger( "12500000000" );
-		LongInteger B = new LongInteger( "50" );
-		LongInteger C = LongInteger.divide( A, B );
-
-//		LongInteger D = new LongInteger( "+500000" );
-//		LongInteger E = new LongInteger( "00025000" );
-//		LongInteger C = LongInteger.multiply( D, E );
-		System.out.println(C);
+		System.out.println(LongInteger.add(new LongInteger( "-732246813575" ), new LongInteger( "-3333" )));
 	}
 }
